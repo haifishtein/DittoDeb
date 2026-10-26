@@ -132,3 +132,5 @@ En `tauri.conf.json`:
 - `tauri build` compilo binario release OK (`target/release/ditto-deb`), pero el bundler .deb fallo por falta de `libayatana-appindicator3-dev` (deteccion pkg-config). 
 - Se genero .deb manual con `dpkg-deb` en `/tmp/ditto-deb_0.1.0_amd64.deb` (5.0M) y se valido con `dpkg-deb --info/--contents`.
 - Para que Tauri genere .deb automaticamente en CI, instalar `libayatana-appindicator3-dev` en el runner (requiere sudo/apt).
+
+- Tauri bundler oficial ahora genera `.deb` tras instalar `libayatana-appindicator3-dev`: `src-tauri/target/release/bundle/deb/DittoDeb_0.1.0_amd64.deb` (6.79 MiB), validado con `dpkg-deb --info`.
