@@ -12,7 +12,7 @@ mod tray;
 
 fn main() {
     std::panic::set_hook(Box::new(|info| { errlog::log("panic", &info.to_string()); }));
-    let _ = ditto_deb_core::init_db(&ditto_deb_core::db_path());
+    let _ = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| errlog::log("init_db", &e.to_string()));
     tauri::Builder::default()
         .setup(|app| {
             let handle = app.handle().clone();
@@ -20,12 +20,13 @@ fn main() {
                 let mut last = String::new();
                 loop {
                     if let Some((text, html, kind)) = clipboard::poll_once(&mut last) {
-                        if let Ok(conn) = ditto_deb_core::init_db(&ditto_deb_core::db_path()) {
-                            if let Err(e) = ditto_deb_core::insert_clip_full(&conn, &text, html.as_deref(), kind) {
-                                errlog::log("insert_clip", &e.to_string());
+                        match ditto_deb_core::init_db(&ditto_deb_core::db_path()) {
+                            Ok(conn) => {
+                                if let Err(e) = ditto_deb_core::insert_clip_full(&conn, &text, html.as_deref(), kind) {
+                                    errlog::log("insert_clip", &e.to_string());
+                                }
                             }
-                        } else {
-                            errlog::log("init_db", "failed");
+                            Err(e) => errlog::log("init_db", &e.to_string()),
                         }
                     }
                     std::thread::sleep(std::time::Duration::from_millis(500));
