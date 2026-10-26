@@ -1,10 +1,11 @@
 [package]
 name = "ditto-deb"
 version = "0.1.0"
+description = "Clon de Ditto para Linux Mint: historial de portapapeles, busqueda FTS5 y popup global"
 edition = "2021"
 
 [build-dependencies]
-tauri-build = "2"
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "protocol-asset"] }
