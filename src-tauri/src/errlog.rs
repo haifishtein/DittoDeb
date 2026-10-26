@@ -1,11 +1,11 @@
-//! Log simple de errores a ~/.local/share/dittox/error.log
+//! Log simple de errores a ~/.local/share/ditto-deb/error.log
 use std::fs::OpenOptions;
 use std::io::Write;
 
 fn path() -> std::path::PathBuf {
     dirs::data_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join("dittox")
+        .join("ditto-deb")
         .join("error.log")
 }
 

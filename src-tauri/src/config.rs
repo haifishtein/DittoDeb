@@ -1,4 +1,4 @@
-//! Configuracion avanzada persistente en ~/.config/dittox/config.json
+//! Configuracion avanzada persistente en ~/.config/ditto-deb/config.json
 use serde::{Deserialize, Serialize};
 use std::fs;
 
@@ -30,7 +30,7 @@ impl Default for AppConfig {
 fn config_path() -> std::path::PathBuf {
     dirs::config_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join("dittox")
+        .join("ditto-deb")
         .join("config.json")
 }
 

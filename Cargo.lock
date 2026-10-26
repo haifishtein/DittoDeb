@@ -881,14 +881,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "dittox"
+name = "ditto-deb"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "arboard",
  "chrono",
  "dirs 5.0.1",
- "dittox-core",
+ "ditto-deb-core",
  "global-hotkey",
  "rusqlite",
  "serde",
@@ -901,7 +901,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dittox-core"
+name = "ditto-deb-core"
 version = "0.1.0"
 dependencies = [
  "arboard",

@@ -1,12 +1,12 @@
-M0+M1+M2+T19+T50 DittoX Desktop-only solo-GitHub
+M0+M1+M2+T19+T50 DittoDeb Desktop-only solo-GitHub
 
 - Stack A Tauri2+Rust+TS+SQLite FTS5, Desktop KDE only (ADR-001 sin GameMode/Decky, ADR-002 solo GitHub sin Flathub/AUR)
-- Toolchain Deck: rustc 1.99 cargo 1.99 node 20.19 npm 10.8.2 (env-log con revert, WORKSPACE-POLICY solo /DittoX)
+- Toolchain Deck: rustc 1.99 cargo 1.99 node 20.19 npm 10.8.2 (env-log con revert, WORKSPACE-POLICY solo /DittoDeb)
 - Scaffold M0: workspace Cargo (src-tauri+crates/core), Vite TS, tauri.conf popup 900x600, capabilities, flatpak yml+desktop+metainfo, LICENSE GPL-3.0
 - M1 texto: init/insert/search FTS5, poll 500ms arboard sha256 dedup, IPC search/get, UI lista+Enter+Esc+hide, hotkey Ctrl+` toggle show/hide, paste wtype/xdotool+flatpak-spawn, tray stub, autostart desktop
 - M2: is_image_allowed 10MB+thumb_path, html sanitize 2000 chars, pins toggle/list/groups
 - T40: import Ditto.db scan tablas/cols texto (max 5000)
-- T19: main Builder+handlers delega dittox-core, fix E0597 collect tipado, check core+dittox sin errores dittox-dev
+- T19: main Builder+handlers delega ditto-deb-core, fix E0597 collect tipado, check core+ditto-deb sin errores ditto-deb-dev
 - Tests: 4 passed (insert/search, dedup, image_limits, import_fake)
 - T50: workflow release.yml tags v* (test+build core+UI, publish softprops tar.gz+notes)
 - Docs: analisis Ditto, comparativa stacks, plan M0-M5, micro-tareas, env template/log, PENDIENTE, comparativas botones/release, diagnosis webkit/cc

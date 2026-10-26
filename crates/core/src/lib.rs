@@ -1,4 +1,4 @@
-//! dittox-core — logica sin Tauri/WebKit para cargo test en Deck sin libs sistema.
+//! ditto-deb-core — logica sin Tauri/WebKit para cargo test en Deck sin libs sistema.
 pub mod html;
 pub mod import;
 pub mod pins;
@@ -67,9 +67,9 @@ pub fn get_clip_detail(
 }
 
 pub fn db_path() -> String {
-    std::env::var("DITTOX_DB").unwrap_or_else(|_| {
+    std::env::var("DITTO_DEB_DB").unwrap_or_else(|_| {
         let base = dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from("."));
-        base.join("dittox/ditto.db").to_string_lossy().into_owned()
+        base.join("ditto-deb/ditto.db").to_string_lossy().into_owned()
     })
 }
 
@@ -87,11 +87,11 @@ mod tests {
     #[test]
     fn insert_and_search() {
         let conn = init_db(":memory:").unwrap();
-        insert_clip(&conn, "hello dittox steam deck").unwrap();
+        insert_clip(&conn, "hello ditto-deb steam deck").unwrap();
         insert_clip(&conn, "other text").unwrap();
-        let r = search_clips(&conn, "dittox", 10).unwrap();
+        let r = search_clips(&conn, "ditto-deb", 10).unwrap();
         assert_eq!(r.len(), 1);
-        assert!(r[0].1.contains("dittox"));
+        assert!(r[0].1.contains("ditto-deb"));
     }
     #[test]
     fn dedup_and_empty() {
@@ -110,7 +110,7 @@ mod tests {
     }
     #[test]
     fn import_fake_ditto_db() {
-        let dir = std::env::temp_dir().join(format!("dittox-t40-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("ditto-deb-t40-{}", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
         let src_path = dir.join("Ditto.db");
         {
@@ -147,7 +147,7 @@ pub fn save_image_png(bytes: &[u8], width: usize, height: usize) -> Result<Strin
     let hash = format!("{:x}", h.finalize());
     let dir = dirs::data_dir()
         .unwrap_or_else(|| PathBuf::from("."))
-        .join("dittox")
+        .join("ditto-deb")
         .join("images");
     fs::create_dir_all(&dir).map_err(|e| rusqlite::Error::ToSqlConversionFailure(Box::new(e)))?;
     let path = dir.join(format!("{}.png", hash));

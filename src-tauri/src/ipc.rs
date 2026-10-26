@@ -1,4 +1,4 @@
-//! T12 IPC Tauri — search_clips + get_clip por id. Path DB via DITTOX_DB o ~/.local/share/dittox/ditto.db
+//! T12 IPC Tauri — search_clips + get_clip por id. Path DB via DITTO_DEB_DB o ~/.local/share/ditto-deb/ditto.db
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -9,8 +9,8 @@ pub struct ClipItem {
 
 #[tauri::command]
 pub fn search_clips_cmd(q: String, limit: i64) -> Result<Vec<ClipItem>, String> {
-    let conn = dittox_core::init_db(&dittox_core::db_path()).map_err(|e| e.to_string())?;
-    let rows = dittox_core::search_clips(&conn, &q, limit).map_err(|e| e.to_string())?;
+    let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
+    let rows = ditto_deb_core::search_clips(&conn, &q, limit).map_err(|e| e.to_string())?;
     Ok(rows
         .into_iter()
         .map(|(id, text)| ClipItem { id, text })
@@ -19,7 +19,7 @@ pub fn search_clips_cmd(q: String, limit: i64) -> Result<Vec<ClipItem>, String> 
 
 #[tauri::command]
 pub fn get_clip_cmd(id: i64) -> Result<Option<String>, String> {
-    let conn = dittox_core::init_db(&dittox_core::db_path()).map_err(|e| e.to_string())?;
+    let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare("SELECT text FROM clips WHERE id=?1")
         .map_err(|e| e.to_string())?;
@@ -33,14 +33,14 @@ pub fn get_clip_cmd(id: i64) -> Result<Option<String>, String> {
 
 #[tauri::command]
 pub fn toggle_pin_cmd(id: i64) -> Result<bool, String> {
-    let conn = dittox_core::init_db(&dittox_core::db_path()).map_err(|e| e.to_string())?;
-    dittox_core::pins::toggle_pin(&conn, id).map_err(|e| e.to_string())
+    let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
+    ditto_deb_core::pins::toggle_pin(&conn, id).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
 pub fn list_pinned_cmd() -> Result<Vec<ClipItem>, String> {
-    let conn = dittox_core::init_db(&dittox_core::db_path()).map_err(|e| e.to_string())?;
-    let rows = dittox_core::pins::list_pinned(&conn, 100).map_err(|e| e.to_string())?;
+    let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
+    let rows = ditto_deb_core::pins::list_pinned(&conn, 100).map_err(|e| e.to_string())?;
     Ok(rows
         .into_iter()
         .map(|(id, text)| ClipItem { id, text })
@@ -49,8 +49,8 @@ pub fn list_pinned_cmd() -> Result<Vec<ClipItem>, String> {
 
 #[tauri::command]
 pub fn import_ditto_cmd(path: String) -> Result<usize, String> {
-    let conn = dittox_core::init_db(&dittox_core::db_path()).map_err(|e| e.to_string())?;
-    dittox_core::import::import_ditto_db(&conn, &path).map_err(|e| e.to_string())
+    let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
+    ditto_deb_core::import::import_ditto_db(&conn, &path).map_err(|e| e.to_string())
 }
 
 #[derive(Serialize)]
@@ -63,8 +63,8 @@ pub struct ClipDetail {
 
 #[tauri::command]
 pub fn get_clip_detail_cmd(id: i64) -> Result<Option<ClipDetail>, String> {
-    let conn = dittox_core::init_db(&dittox_core::db_path()).map_err(|e| e.to_string())?;
-    let detail = dittox_core::get_clip_detail(&conn, id).map_err(|e| e.to_string())?;
+    let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
+    let detail = ditto_deb_core::get_clip_detail(&conn, id).map_err(|e| e.to_string())?;
     Ok(detail.map(|(text, html, kind)| ClipDetail {
         id,
         text,
@@ -95,6 +95,6 @@ pub fn set_config_cmd(cfg: crate::config::AppConfig) -> Result<(), String> {
 
 #[tauri::command]
 pub fn get_error_log_cmd() -> String {
-    let p = dirs::data_dir().unwrap_or_default().join("dittox").join("error.log");
+    let p = dirs::data_dir().unwrap_or_default().join("ditto-deb").join("error.log");
     std::fs::read_to_string(p).unwrap_or_default()
 }

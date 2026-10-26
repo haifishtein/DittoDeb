@@ -1,4 +1,4 @@
-# Comparativa de Stacks — DittoX para SteamOS
+# Comparativa de Stacks — DittoDeb para SteamOS
 Fecha: 2026-10-14
 Objetivo: Clon Ditto (GPL-3.0) para SteamOS (Arch+KDE+Gamescope). Local-first.
 

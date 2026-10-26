@@ -1,7 +1,7 @@
 # M2-M5 + Riesgos SteamOS
 
 ## M2 multimedia (1-2sem)
-- imagen png/jpg clipboard -> BLOB + thumbnail cache ~/.cache/dittox/thumbs
+- imagen png/jpg clipboard -> BLOB + thumbnail cache ~/.cache/ditto-deb/thumbs
 - html preview sanitizado
 - uri-list archivos (solo paths, no copiar bytes)
 - pins/favoritos, grupos/carpetas, editar/borrar, contadores
@@ -20,7 +20,7 @@
 
 ## M5 distribucion
 - Flathub: manifest + metainfo + screenshots
-- AUR dittox-bin + dittox-git PKGBUILD
+- AUR ditto-deb-bin + ditto-deb-git PKGBUILD
 - Decky Store submit
 - CI github actions: cargo clippy/fmt/test + tauri build + flatpak-builder lint
 

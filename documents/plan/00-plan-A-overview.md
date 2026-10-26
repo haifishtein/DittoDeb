@@ -1,4 +1,4 @@
-# Plan A — DittoX Tauri+Rust para SteamOS
+# Plan A — DittoDeb Tauri+Rust para SteamOS
 Fecha: 2026-10-14 / Stack confirmado: A
 Origen: clon Ditto sabrogden/Ditto GPL-3.0. Local-first.
 

@@ -1,7 +1,7 @@
 import "./styles.css";
 import { invoke, convertFileSrc } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-// DittoX popup: virtualized list + preview pane + pins
+// DittoDeb popup: virtualized list + preview pane + pins
 type Clip = { id: number; text: string; pinned?: boolean };
 type ClipDetail = { id: number; text: string; html: string | null; kind: string };
 const ITEM_H = 68;

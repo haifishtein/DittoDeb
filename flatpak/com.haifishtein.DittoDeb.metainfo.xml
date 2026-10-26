@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.haifishtein.DittoX</id>
-  <name>DittoX</name>
+  <id>com.haifishtein.DittoDeb</id>
+  <name>DittoDeb</name>
   <summary>Clipboard manager for SteamOS</summary>
   <description><p>Clone of Ditto for SteamOS. Local-first clipboard history with search, pins, image preview, import, and customizable hotkeys/settings.</p></description>
-  <launchable type="desktop-id">com.haifishtein.DittoX.desktop</launchable>
-  <url type="homepage">https://github.com/haifishtein/DittoX</url>
+  <launchable type="desktop-id">com.haifishtein.DittoDeb.desktop</launchable>
+  <url type="homepage">https://github.com/haifishtein/DittoDeb</url>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <categories>

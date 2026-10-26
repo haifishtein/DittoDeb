@@ -1,4 +1,4 @@
-# LOG ambiente — DittoX (T00+)
+# LOG ambiente — DittoDeb (T00+)
 Proposito: registrar TODO lo instalado/modificado desde T00 para poder desinstalar/limpiar.
 Formato: 1 entrada por accion. No borrar entradas, solo agregar REVERT.
 
@@ -38,7 +38,7 @@ Formato: 1 entrada por accion. No borrar entradas, solo agregar REVERT.
 ### 2026-10-14 — T00 env check (solo lectura)
 - Que: verificacion toolchain
 - Como: `rustc --version; cargo --version; node --version`
-- Donde: /home/deck/Documents/git/DittoX
+- Donde: /home/deck/Documents/git/DittoDeb
 - Por que: T00
 - Revert: N/A (solo lectura, no instalo nada)
 - Temp: ninguno

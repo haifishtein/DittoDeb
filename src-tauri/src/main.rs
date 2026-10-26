@@ -12,7 +12,7 @@ mod tray;
 
 fn main() {
     std::panic::set_hook(Box::new(|info| { errlog::log("panic", &info.to_string()); }));
-    let _ = dittox_core::init_db(&dittox_core::db_path());
+    let _ = ditto_deb_core::init_db(&ditto_deb_core::db_path());
     tauri::Builder::default()
         .setup(|app| {
             let handle = app.handle().clone();
@@ -20,8 +20,8 @@ fn main() {
                 let mut last = String::new();
                 loop {
                     if let Some((text, html, kind)) = clipboard::poll_once(&mut last) {
-                        if let Ok(conn) = dittox_core::init_db(&dittox_core::db_path()) {
-                            if let Err(e) = dittox_core::insert_clip_full(&conn, &text, html.as_deref(), kind) {
+                        if let Ok(conn) = ditto_deb_core::init_db(&ditto_deb_core::db_path()) {
+                            if let Err(e) = ditto_deb_core::insert_clip_full(&conn, &text, html.as_deref(), kind) {
                                 errlog::log("insert_clip", &e.to_string());
                             }
                         } else {
@@ -53,7 +53,7 @@ fn main() {
             let tray_menu = Menu::with_items(
                 app,
                 &[
-                    &MenuItem::with_id(app, "show", "Show DittoX", true, None::<&str>)?,
+                    &MenuItem::with_id(app, "show", "Show DittoDeb", true, None::<&str>)?,
                     &MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?,
                     &MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?,
                 ],
@@ -94,5 +94,5 @@ fn main() {
             paste::paste_clip_cmd
         ])
         .run(tauri::generate_context!())
-        .expect("DittoX Tauri run failed");
+        .expect("DittoDeb Tauri run failed");
 }

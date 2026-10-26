@@ -5,7 +5,7 @@ Archivos:
 - Cargo.toml workspace + src-tauri/Cargo.toml (tauri2, rusqlite+fts5, arboard, clipboard-rs, global-hotkey, tray-icon, dirs, serde, tokio)
 - src-tauri/tauri.conf.json (popup 900x600, centered, alwaysOnTop, singleInstance, tray, autostart)
 - src/ Vite+TS: App.tsx popup busqueda, main.ts, styles Deck dark
-- flatpak/com.haifishtein.DittoX.yml (runtime freedesktop 23.08, WebKitGTK, permisos wayland+x11+klipper+host paste opt)
+- flatpak/com.haifishtein.DittoDeb.yml (runtime freedesktop 23.08, WebKitGTK, permisos wayland+x11+klipper+host paste opt)
 - LICENSE GPL-3.0 + README.md raiz
 - documents/plan/*.md (este set)
 

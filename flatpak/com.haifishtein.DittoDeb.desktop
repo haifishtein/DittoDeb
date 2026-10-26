@@ -1,9 +1,9 @@
 [Desktop Entry]
 Type=Application
-Name=DittoX
+Name=DittoDeb
 Comment=Clipboard manager for SteamOS (Ditto clone)
-Exec=/home/deck/Documents/git/DittoX/target/release/dittox
-Icon=com.haifishtein.DittoX
+Exec=/home/deck/Documents/git/DittoDeb/target/release/ditto-deb
+Icon=com.haifishtein.DittoDeb
 Terminal=false
 Categories=Utility;
 X-GNOME-Autostart-enabled=true

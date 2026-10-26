@@ -32,7 +32,7 @@ pub fn poll_once(last_hash: &mut String) -> Option<(String, Option<String>, &'st
         let img_hash = format!("{:x}", h.finalize());
         if img_hash != *last_hash {
             *last_hash = img_hash;
-            if let Ok(path) = dittox_core::save_image_png(&bytes, img.width, img.height) {
+            if let Ok(path) = ditto_deb_core::save_image_png(&bytes, img.width, img.height) {
                 return Some(("[image]".to_string(), Some(path), "image"));
             }
         }

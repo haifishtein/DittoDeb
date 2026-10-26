@@ -1,4 +1,4 @@
-//! Hotkey global personalizable. Persiste en ~/.config/dittox/hotkey.
+//! Hotkey global personalizable. Persiste en ~/.config/ditto-deb/hotkey.
 use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 use std::sync::Mutex;
 
@@ -8,7 +8,7 @@ static CURRENT: Mutex<Option<HotKey>> = Mutex::new(None);
 fn config_path() -> std::path::PathBuf {
     dirs::config_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
-        .join("dittox")
+        .join("ditto-deb")
         .join("hotkey")
 }
 

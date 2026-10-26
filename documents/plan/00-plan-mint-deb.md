@@ -1,22 +1,22 @@
 # Plan — DittoDeb: versión Linux Mint empaquetada como .deb
 
 Fecha: 2026-10-26
-Base: fork de DittoX (Tauri 2 + Rust + TypeScript + SQLite FTS5)
+Base: fork de DittoDeb (Tauri 2 + Rust + TypeScript + SQLite FTS5)
 Objetivo: clon de Ditto (sabrogden/Ditto, GPL-3.0) para Linux Mint, distribuido como paquete `.deb`.
 
 ## 1. Contexto
 
 - **Ditto original**: extensión de portapapeles para Windows (C++/MFC, Win32). Funcionalidades clave: monitor de portapapeles en background, historial persistente con búsqueda full-text, popup con hotkey global (`Ctrl + `` `), pegado en ventana anterior, multi-formato (texto/imagen/HTML/archivos), pins/favoritos, grupos, tray icon, autostart, import/export.
-- **DittoX**: reimplementación para SteamOS (Arch + KDE Plasma). Stack Tauri 2 + Rust + TS + SQLite FTS5. Desktop-only (ADR-001), solo-GitHub (ADR-002). Ya tiene daemon clipboard, popup, tray, autostart, paste X11/Wayland, import Ditto.db.
-- **DittoDeb**: adaptación de DittoX a **Linux Mint** (Ubuntu/Debian base) empaquetada como **.deb**, manteniendo stack y licencia GPL-3.0.
+- **DittoDeb**: reimplementación para SteamOS (Arch + KDE Plasma). Stack Tauri 2 + Rust + TS + SQLite FTS5. Desktop-only (ADR-001), solo-GitHub (ADR-002). Ya tiene daemon clipboard, popup, tray, autostart, paste X11/Wayland, import Ditto.db.
+- **DittoDeb**: adaptación de DittoDeb a **Linux Mint** (Ubuntu/Debian base) empaquetada como **.deb**, manteniendo stack y licencia GPL-3.0.
 
 Linux Mint 22.x = Ubuntu 24.04 (noble). Entornos por defecto: Cinnamon/MATE/XFCE, **X11 por defecto** (Wayland experimental). Esto simplifica paste/clipboard respecto a Wayland puro.
 
 ## 2. Decisiones (ADRs DittoDeb)
 
-- **D01 — Reutilizar stack Tauri 2** (no reescribir). Hereda toda la lógica de DittoX.
+- **D01 — Reutilizar stack Tauri 2** (no reescribir). Hereda toda la lógica de DittoDeb.
 - **D02 — X11-first**: paste con `xdotool` (disponible en Mint por defecto-ish; se declara dependencia). Fallback `wtype` si `WAYLAND_DISPLAY`. Documentar limitaciones Wayland.
-- **D03 — Renombrado completo** `dittox` → `ditto-deb`/`DittoDeb` (crate, binario, rutas de datos/config, frontend, desktop file, identifier). Rutas: `~/.local/share/ditto-deb/ditto.db`, `~/.config/ditto-deb/config.json`.
+- **D03 — Renombrado completo** `ditto-deb` → `ditto-deb`/`DittoDeb` (crate, binario, rutas de datos/config, frontend, desktop file, identifier). Rutas: `~/.local/share/ditto-deb/ditto.db`, `~/.config/ditto-deb/config.json`.
 - **D04 — Empaquetado via Tauri bundle** (`targets: ["deb"]`) + metadatos Debian (depends/recommends/section). Genera `.deb` en CI y local.
 - **D05 — Tray con Ayatana AppIndicator** (`libayatana-appindicator3`) para Cinnamon.
 - **D06 — Autostart por usuario** (`~/.config/autostart/ditto-deb.desktop`), no sistema.
@@ -24,7 +24,7 @@ Linux Mint 22.x = Ubuntu 24.04 (noble). Entornos por defecto: Cinnamon/MATE/XFCE
 
 ## 3. Análisis comparativo
 
-| Funcionalidad Ditto | DittoX | DittoDeb (Mint .deb) |
+| Funcionalidad Ditto | DittoDeb | DittoDeb (Mint .deb) |
 |---|---|---|
 | Monitor clipboard bg | poll arboard 500ms | igual, X11 estable |
 | Historial + FTS5 | SQLite + FTS5 | igual |
@@ -37,13 +37,13 @@ Linux Mint 22.x = Ubuntu 24.04 (noble). Entornos por defecto: Cinnamon/MATE/XFCE
 | Import Ditto.db | import.rs | igual |
 | Empaquetado | tar.gz/Flatpak | **.deb** (Tauri bundle) |
 
-## 4. Cambios técnicos respecto a DittoX
+## 4. Cambios técnicos respecto a DittoDeb
 
 ### 4.1 Renombrado (micro-tareas)
-- `Cargo.toml` (workspace): members sin cambio; package `dittox` → `ditto-deb` (crate bin).
-- `src-tauri/Cargo.toml`: `name = "ditto-deb"`, dep `ditto-deb-core` (o mantener `dittox-core`? Renombrar a `ditto-deb-core` para consistencia). `tauri.conf.json`: `productName = "DittoDeb"`, `identifier = "com.<maintainer>.DittoDeb"`, `bundle.targets = ["deb"]`.
+- `Cargo.toml` (workspace): members sin cambio; package `ditto-deb` → `ditto-deb` (crate bin).
+- `src-tauri/Cargo.toml`: `name = "ditto-deb"`, dep `ditto-deb-core` (o mantener `ditto-deb-core`? Renombrar a `ditto-deb-core` para consistencia). `tauri.conf.json`: `productName = "DittoDeb"`, `identifier = "com.<maintainer>.DittoDeb"`, `bundle.targets = ["deb"]`.
 - `crates/core`: crate name `ditto-deb-core`, rutas db/config `ditto-deb`.
-- `config.rs`, `ipc.rs`, `errlog.rs`, `main.rs`: strings/rutas `dittox` → `ditto-deb`.
+- `config.rs`, `ipc.rs`, `errlog.rs`, `main.rs`: strings/rutas `ditto-deb` → `ditto-deb`.
 - `paste.rs`: binarios igual (xdotool/wtype); logs `ditto-deb`.
 - Frontend `src/`: título, package.json name, CSS.
 - `flatpak/` y `.github/workflows/release.yml`: renombrar o dejar opcional; workflow principal pasa a build .deb.
@@ -66,11 +66,13 @@ En `tauri.conf.json`:
   "active": true,
   "icon": ["icons/icon.png"],
   "targets": ["deb"],
-  "deb": {
-    "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0", "libsoup-3.0-0", "libayatana-appindicator3-1", "libx11-6"],
-    "recommends": ["xdotool", "wl-clipboard"],
-    "section": "utils",
-    "priority": "optional"
+  "linux": {
+    "deb": {
+      "depends": ["libwebkit2gtk-4.1-0", "libgtk-3-0", "libsoup-3.0-0", "libayatana-appindicator3-1", "libx11-6"],
+      "recommends": ["xdotool", "wl-clipboard"],
+      "section": "utils",
+      "priority": "optional"
+    }
   }
 }
 ```
@@ -120,5 +122,5 @@ En `tauri.conf.json`:
 ## 9. Fuentes
 
 - Ditto original: https://github.com/sabrogden/Ditto (GPL-3.0)
-- DittoX: `/home/mike/ClineWorkSpace/DittoX` (commit 5e33e10)
+- DittoDeb: `/home/mike/ClineWorkSpace/DittoDeb` (commit 5e33e10)
 - Linux Mint 22.3 (Ubuntu 24.04 noble), dpkg 1.22.6

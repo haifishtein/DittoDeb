@@ -1,6 +1,6 @@
 # documents/
 
-Carpeta para análisis de DittoX.
+Carpeta para análisis de DittoDeb.
 
 - Pon aquí notas, diagramas, requisitos, ADRs, etc.
 - Subcarpetas sugeridas:

@@ -1,7 +1,7 @@
 //! SQLite schema v1 — FTS5
 //! CREATE TABLE clips(id INTEGER PRIMARY KEY, text TEXT, html TEXT, kind TEXT, app TEXT, created_at INTEGER, pinned INTEGER DEFAULT 0);
 //! CREATE VIRTUAL TABLE clips_fts USING fts5(text, content=clips, content_rowid=id);
-//! + triggers ai/ad/au. Path: ~/.local/share/dittox/ditto.db
+//! + triggers ai/ad/au. Path: ~/.local/share/ditto-deb/ditto.db
 use rusqlite::{Connection, Result};
 
 pub fn init_db(path: &str) -> Result<Connection> {

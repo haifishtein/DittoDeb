@@ -1,4 +1,4 @@
-# DittoX — Clon de Ditto para SteamOS
+# DittoDeb — Clon de Ditto para SteamOS
 
 ## Objetivo
 Clon funcional de Ditto (sabrogden/Ditto, GPL-3.0) para SteamOS (Arch Linux + KDE Plasma + Gamescope).
@@ -27,7 +27,7 @@ Alternativas descartadas (por ahora):
 
 ```
 ┌─────────────┐     D-Bus / wlr-data-control / X11     ┌──────────────┐
-│ KDE Plasma  │◄──────────────────────────────────────►│  dittox-     │
+│ KDE Plasma  │◄──────────────────────────────────────►│  ditto-deb-     │
 │ Gamescope   │        clipboard events                │  daemon (Rust)│
 │ Steam Input │                                        └──────┬───────┘
 └─────────────┘                                               │ SQLite
@@ -40,13 +40,13 @@ Alternativas descartadas (por ahora):
 ```
 
 Componentes:
-1. `dittox-daemon` (Rust): vigila clipboard (poll + eventos), guarda en SQLite, expone API local (Tauri IPC / Unix socket / HTTP localhost).
-2. `dittox-ui` (Tauri WebView): popup búsqueda (`Ctrl+`` `), lista virtualizada, preview, editor, settings.
-3. `dittox-tray`: StatusNotifierItem para Desktop Mode.
+1. `ditto-deb-daemon` (Rust): vigila clipboard (poll + eventos), guarda en SQLite, expone API local (Tauri IPC / Unix socket / HTTP localhost).
+2. `ditto-deb-ui` (Tauri WebView): popup búsqueda (`Ctrl+`` `), lista virtualizada, preview, editor, settings.
+3. `ditto-deb-tray`: StatusNotifierItem para Desktop Mode.
 4. Integración SteamOS:
    - Desktop Mode: autostart `.desktop`, atajo global KDE, tray OK.
    - Game Mode: Decky Loader plugin o shortcut `steam://` + chord de mando (ej. `Steam + V`), overlay limitado. Pegado via `ydotool`/`wtype` según compositor.
-5. Persistencia: `~/.local/share/dittox/ditto.db` (SQLite + FTS5 para búsqueda, SQLCipher opcional).
+5. Persistencia: `~/.local/share/ditto-deb/ditto.db` (SQLite + FTS5 para búsqueda, SQLCipher opcional).
 6. Formatos: `text/plain`, `text/html`, `image/png`, `text/uri-list` (archivos). Límite configurable (ej. no guardar >50MB imágenes).
 
 ## Roadmap
@@ -56,14 +56,14 @@ Componentes:
 - **M2 — Multimedia**: imágenes, HTML preview, pins/favoritos, grupos, editar/borrar, límites, ignorar apps.
 - **M3 — Game Mode**: atajo mando, overlay Decky, pegado en juegos (notas: anti-cheat — solo texto, opt-in).
 - **M4 — Paridad Ditto**: network sync, cifrado, import/export desde Ditto `.db`, temas, i18n (es/en).
-- **M5 — Distribución**: Flathub, AUR `dittox-bin`, Decky Store.
+- **M5 — Distribución**: Flathub, AUR `ditto-deb-bin`, Decky Store.
 
 ## Riesgos SteamOS específicos
 1. Wayland restringe lectura clipboard en background (privacidad). Necesita portal o `wlr-data-control` (solo en compositor, no Flatpak sin permisos). Fallback: modo XWayland + polling + extensión KWin/Klipper sync.
 2. Gamescope fullscreen captura teclado/mando — hotkey global difícil. Solución: Decky plugin + Steam Input chord.
 3. Flatpak sandbox bloquea `ydotool`/`wtype` para auto-paste. Necesita `flatpak-spawn --host` o modo no-sandbox (AUR/native).
 4. Anti-cheat en juegos puede flaggear inyección de teclas — pegar solo bajo demanda explícita, nunca automático.
-5. GPL-3.0: si portas código de Ditto, DittoX debe ser GPL-3.0. Previsto.
+5. GPL-3.0: si portas código de Ditto, DittoDeb debe ser GPL-3.0. Previsto.
 
 ## Siguiente paso inmediato
 1. Confirmar stack (Tauri vs alternativas).

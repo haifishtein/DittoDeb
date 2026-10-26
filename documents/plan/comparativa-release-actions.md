@@ -1,5 +1,5 @@
 # Comparativa Release Actions — solo GitHub (T50)
-Fecha: 2026-10-14 / Contexto: DittoX Desktop-only, tags v*.
+Fecha: 2026-10-14 / Contexto: DittoDeb Desktop-only, tags v*.
 
 ## Opcion A — softprops/action-gh-release (recomendada)
 - Repo: github.com/softprops/action-gh-release (JS/TS, ~5k stars, mantenido).

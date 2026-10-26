@@ -1,4 +1,4 @@
-//! T40 import Ditto.db (Windows) -> DittoX clips text.
+//! T40 import Ditto.db (Windows) -> DittoDeb clips text.
 //! Ditto original guarda en SQLite (Ditto.db). Schema varia por version, asi que
 //! probamos tablas/columnas comunes y extraemos texto.
 use rusqlite::{Connection, Result};

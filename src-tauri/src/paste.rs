@@ -17,7 +17,7 @@ fn key_args() -> (&'static str, Vec<&'static str>) {
 
 #[tauri::command]
 pub fn paste_clip_cmd(app: AppHandle, id: i64) -> Result<(), String> {
-    let conn = dittox_core::init_db(&dittox_core::db_path()).map_err(|e| e.to_string())?;
+    let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare("SELECT text FROM clips WHERE id=?1")
         .map_err(|e| e.to_string())?;
