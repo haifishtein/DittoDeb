@@ -889,7 +889,6 @@ dependencies = [
  "chrono",
  "dirs 5.0.1",
  "ditto-deb-core",
- "global-hotkey",
  "rusqlite",
  "serde",
  "serde_json",
@@ -898,6 +897,7 @@ dependencies = [
  "tauri-build",
  "tokio",
  "tray-icon 0.18.0",
+ "x11-dl",
 ]
 
 [[package]]
@@ -1507,22 +1507,6 @@ name = "glob"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
-
-[[package]]
-name = "global-hotkey"
-version = "0.6.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41fbb3a4e56c901ee66c190fdb3fa08344e6d09593cc6c61f8eb9add7144b271"
-dependencies = [
- "crossbeam-channel",
- "keyboard-types 0.7.0",
- "objc2 0.6.5",
- "objc2-app-kit 0.3.2",
- "once_cell",
- "thiserror 2.0.21",
- "windows-sys 0.59.0",
- "x11-dl",
-]
 
 [[package]]
 name = "gobject-sys"

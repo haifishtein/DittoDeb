@@ -15,20 +15,30 @@ fn key_args() -> (&'static str, Vec<&'static str>) {
     }
 }
 
-#[tauri::command]
-pub fn paste_clip_cmd(app: AppHandle, id: i64) -> Result<(), String> {
+fn fetch_clip(id: i64) -> Result<(String, Option<String>), String> {
     let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
     let mut stmt = conn
-        .prepare("SELECT text FROM clips WHERE id=?1")
+        .prepare("SELECT text, html FROM clips WHERE id=?1")
         .map_err(|e| e.to_string())?;
-    let text: String = stmt
-        .query_row([id], |r| r.get(0))
+    let (text, html): (String, Option<String>) = stmt
+        .query_row([id], |r| Ok((r.get(0)?, r.get(1)?)))
         .map_err(|e| e.to_string())?;
+    Ok((text, html))
+}
+
+fn do_paste(app: AppHandle, id: i64, plain: bool) -> Result<(), String> {
+    let (text, html) = fetch_clip(id)?;
     let mut cb = arboard::Clipboard::new().map_err(|e| { crate::errlog::log("paste_clipboard", &e.to_string()); e.to_string() })?;
-    cb.set_text(&text).map_err(|e| { crate::errlog::log("paste_set_text", &e.to_string()); e.to_string() })?;
+    if plain || html.as_deref().map(|h| h.trim().is_empty()).unwrap_or(true) {
+        cb.set_text(&text).map_err(|e| { crate::errlog::log("paste_set_text", &e.to_string()); e.to_string() })?;
+    } else if let Some(h) = html {
+        cb.set_html(h, Some(text)).map_err(|e| { crate::errlog::log("paste_set_html", &e.to_string()); e.to_string() })?;
+    } else {
+        cb.set_text(&text).map_err(|e| { crate::errlog::log("paste_set_text", &e.to_string()); e.to_string() })?;
+    }
     // Let Wayland/X11 settle clipboard ownership before hiding + pasting.
     std::thread::sleep(std::time::Duration::from_millis(50));
-    // 1. Hide popup FIRST so focus returns to previous app (Kate/KWrite).
+    // 1. Hide popup FIRST so focus returns to previous app.
     if let Some(win) = app.get_webview_window("main") {
         let _ = win.hide();
     }
@@ -50,4 +60,14 @@ pub fn paste_clip_cmd(app: AppHandle, id: i64) -> Result<(), String> {
     status
         .map(|_| ())
         .map_err(|e| { crate::errlog::log("paste_key", &format!("{bin}: {e}")); format!("paste key failed ({bin}): {e}") })
+}
+
+#[tauri::command]
+pub fn paste_clip_cmd(app: AppHandle, id: i64) -> Result<(), String> {
+    do_paste(app, id, false)
+}
+
+#[tauri::command]
+pub fn paste_clip_plain_cmd(app: AppHandle, id: i64) -> Result<(), String> {
+    do_paste(app, id, true)
 }

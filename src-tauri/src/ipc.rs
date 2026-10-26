@@ -98,3 +98,9 @@ pub fn get_error_log_cmd() -> String {
     let p = dirs::data_dir().unwrap_or_default().join("ditto-deb").join("error.log");
     std::fs::read_to_string(p).unwrap_or_default()
 }
+#[tauri::command]
+pub fn hide_window_cmd(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri::Manager;
+    let win = app.get_webview_window("main").ok_or_else(|| "main window not found".to_string())?;
+    win.hide().map_err(|e| e.to_string())
+}

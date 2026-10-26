@@ -26,7 +26,7 @@ document.querySelector("#app")!.innerHTML = `
     <div id=preview-body class=preview-body><div class=empty-sub>Select a clip.</div></div>
   </aside>
 </div>
-<div class=footer><span><kbd>↑↓</kbd> navigate</span><span><kbd>Enter</kbd> paste selected</span><span><kbd>Esc</kbd> hide</span></div>`;
+<div class=footer><span><kbd>↑↓</kbd> navigate</span><button class=footer-btn type=button data-action=enter><kbd>Enter</kbd> paste selected</button><button class=footer-btn type=button data-action=hide><kbd>Esc</kbd> hide</button></div>`;
 const q = document.querySelector("#q") as HTMLInputElement;
 const list = document.querySelector("#list") as HTMLDivElement;
 const previewBody = document.querySelector("#preview-body") as HTMLDivElement;
@@ -38,6 +38,10 @@ const statusEl = document.querySelector("#status")!;
 async function paste(id: number) {
   statusEl.textContent = "Pasting…";
   try { await invoke("paste_clip_cmd", { id }); } catch (e) { statusEl.textContent = String(e); }
+}
+async function pastePlain(id: number) {
+  statusEl.textContent = "Pasting plain…";
+  try { await invoke("paste_clip_plain_cmd", { id }); } catch (e) { statusEl.textContent = String(e); }
 }
 async function togglePin(id: number) {
   try { await invoke("toggle_pin_cmd", { id }); await refresh(); } catch (e) { statusEl.textContent = String(e); }
@@ -120,18 +124,34 @@ async function refresh() {
 }
 list.addEventListener("scroll", () => { scrollTop = list.scrollTop; renderList(); });
 q.addEventListener("input", refresh);
+q.focus();
+getCurrentWindow().onFocusChanged(({ payload }) => { if (payload) q.focus(); });
+async function hideWindow() {
+  try { await invoke("hide_window_cmd"); }
+  catch (e1) {
+    try { await getCurrentWindow().hide(); }
+    catch (e2) { statusEl.textContent = String(e2 || e1); }
+  }
+}
 q.addEventListener("keydown", async (e) => {
-  if (e.key === "Escape") await getCurrentWindow().hide();
+  if (e.key === "Escape") { e.preventDefault(); await hideWindow(); }
   else if (e.key === "ArrowDown") { e.preventDefault(); if (items.length) { sel = (sel + 1) % items.length; paintSel(); } }
   else if (e.key === "ArrowUp") { e.preventDefault(); if (items.length) { sel = (sel - 1 + items.length) % items.length; paintSel(); } }
-  else if (e.key === "Enter" && items.length > 0) await paste(items[sel].id);
+  else if (e.key === "Enter" && items.length > 0) {
+    e.preventDefault();
+    if (e.shiftKey) await pastePlain(items[sel].id); else await paste(items[sel].id);
+  }
+  // Ctrl+Shift+V: paste selected clip as plain text (Ditto-style).
+  if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "v" && items.length > 0) {
+    e.preventDefault();
+    await pastePlain(items[sel].id);
+  }
 });
 // hotkey customization UI
 const footer = document.querySelector('.footer') as HTMLDivElement;
 const hkBtn = document.createElement('button');
 hkBtn.textContent = 'Hotkey';
-hkBtn.className = 'pin-btn';
-hkBtn.style.marginLeft = '8px';
+hkBtn.className = 'footer-btn';
 footer.appendChild(hkBtn);
 hkBtn.onclick = async () => {
   try {
@@ -150,8 +170,7 @@ refresh();
 // Advanced settings UI
 const settingsBtn = document.createElement('button');
 settingsBtn.textContent = 'Settings';
-settingsBtn.className = 'pin-btn';
-settingsBtn.style.marginLeft = '8px';
+settingsBtn.className = 'footer-btn';
 footer.appendChild(settingsBtn);
 
 const modal = document.createElement('div');
@@ -167,8 +186,8 @@ box.innerHTML = `
   <label><input id=cfg-case type=checkbox> Case-sensitive search</label><br>
   <label><input id=cfg-autostart type=checkbox> Autostart</label><br>
   <div style="margin-top:12px;display:flex;gap:8px;">
-    <button id=cfg-save class=pin-btn>Save</button>
-    <button id=cfg-close class=pin-btn>Close</button>
+    <button id=cfg-save class=footer-btn>Save</button>
+    <button id=cfg-close class=footer-btn>Close</button>
   </div>`;
 modal.appendChild(box);
 document.body.appendChild(modal);
@@ -206,8 +225,7 @@ modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.dis
 // Error log viewer
 const logBtn = document.createElement('button');
 logBtn.textContent = 'Log';
-logBtn.className = 'pin-btn';
-logBtn.style.marginLeft = '8px';
+logBtn.className = 'footer-btn';
 footer.appendChild(logBtn);
 logBtn.onclick = async () => {
   try {
@@ -216,3 +234,29 @@ logBtn.onclick = async () => {
   } catch (e) { statusEl.textContent = String(e); }
 };
 
+// Hide button
+const hideBtn = document.createElement('button');
+hideBtn.textContent = 'Hide (Esc)';
+hideBtn.className = 'footer-btn';
+footer.appendChild(hideBtn);
+hideBtn.onclick = hideWindow;
+
+// Make footer hint buttons actionable
+footer.querySelectorAll('button.footer-btn[data-action="hide"]').forEach((b) => {
+  (b as HTMLButtonElement).onclick = hideWindow;
+});
+footer.querySelectorAll('button.footer-btn[data-action="enter"]').forEach((b) => {
+  (b as HTMLButtonElement).onclick = async () => { if (items.length) await paste(items[sel].id); };
+});
+
+// Global Escape handling (works even when focus is not in the search box)
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (modal.style.display === 'flex') {
+    modal.style.display = 'none';
+    e.preventDefault();
+    return;
+  }
+  e.preventDefault();
+  void hideWindow();
+});

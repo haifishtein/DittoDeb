@@ -1,9 +1,35 @@
 //! Hotkey global personalizable. Persiste en ~/.config/ditto-deb/hotkey.
-use global_hotkey::hotkey::{Code, HotKey, Modifiers};
-use std::sync::Mutex;
+//! Implementación propia sobre X11 (x11-dl) para soportar teclas no ASCII
+//! como la 'ñ' (XK_ntilde), que global-hotkey no mapea.
+use std::sync::mpsc;
+use std::sync::{Mutex, OnceLock};
+use std::time::Duration;
+use x11_dl::xlib;
+use x11_dl::keysym;
 
-static MANAGER: Mutex<Option<global_hotkey::GlobalHotKeyManager>> = Mutex::new(None);
-static CURRENT: Mutex<Option<HotKey>> = Mutex::new(None);
+#[derive(Clone, Copy)]
+pub struct Spec {
+    mods: u32,
+    keysym: u32,
+}
+
+enum Cmd {
+    Register {
+        spec: Spec,
+        reply: mpsc::Sender<Result<(), String>>,
+    },
+}
+
+static EVENT_TX: OnceLock<mpsc::Sender<()>> = OnceLock::new();
+static EVENT_RX: OnceLock<Mutex<mpsc::Receiver<()>>> = OnceLock::new();
+static CMD_TX: OnceLock<mpsc::Sender<Cmd>> = OnceLock::new();
+
+const IGNORED_MODS: [u32; 4] = [
+    0,
+    xlib::Mod2Mask, // NumLock
+    xlib::LockMask, // CapsLock
+    xlib::Mod2Mask | xlib::LockMask,
+];
 
 fn config_path() -> std::path::PathBuf {
     dirs::config_dir()
@@ -24,113 +50,102 @@ fn save_config(s: &str) {
     let _ = std::fs::write(p, s);
 }
 
-fn parse_mods(tokens: &[&str]) -> Option<Modifiers> {
-    let mut m = Modifiers::empty();
-    let mut any = false;
+fn parse_mods(tokens: &[&str]) -> u32 {
+    let mut m = 0u32;
     for t in tokens {
         match t.to_lowercase().as_str() {
-            "ctrl" | "control" => {
-                m |= Modifiers::CONTROL;
-                any = true;
-            }
-            "shift" => {
-                m |= Modifiers::SHIFT;
-                any = true;
-            }
-            "alt" => {
-                m |= Modifiers::ALT;
-                any = true;
-            }
-            "super" | "meta" | "win" => {
-                m |= Modifiers::SUPER;
-                any = true;
-            }
+            "ctrl" | "control" => m |= xlib::ControlMask,
+            "shift" => m |= xlib::ShiftMask,
+            "alt" => m |= xlib::Mod1Mask,
+            "super" | "meta" | "win" => m |= xlib::Mod4Mask,
             _ => {}
         }
     }
-    if any {
-        Some(m)
-    } else {
-        None
-    }
+    m
 }
 
-fn parse_code(tok: &str) -> Result<Code, String> {
+fn parse_keysym(tok: &str) -> Result<u32, String> {
     let t = tok.to_lowercase();
     if t.len() == 1 {
         let c = t.chars().next().unwrap();
         if c.is_ascii_lowercase() {
-            // map a-z
             return Ok(match c {
-                'a' => Code::KeyA,
-                'b' => Code::KeyB,
-                'c' => Code::KeyC,
-                'd' => Code::KeyD,
-                'e' => Code::KeyE,
-                'f' => Code::KeyF,
-                'g' => Code::KeyG,
-                'h' => Code::KeyH,
-                'i' => Code::KeyI,
-                'j' => Code::KeyJ,
-                'k' => Code::KeyK,
-                'l' => Code::KeyL,
-                'm' => Code::KeyM,
-                'n' => Code::KeyN,
-                'o' => Code::KeyO,
-                'p' => Code::KeyP,
-                'q' => Code::KeyQ,
-                'r' => Code::KeyR,
-                's' => Code::KeyS,
-                't' => Code::KeyT,
-                'u' => Code::KeyU,
-                'v' => Code::KeyV,
-                'w' => Code::KeyW,
-                'x' => Code::KeyX,
-                'y' => Code::KeyY,
-                'z' => Code::KeyZ,
+                'a' => keysym::XK_a,
+                'b' => keysym::XK_b,
+                'c' => keysym::XK_c,
+                'd' => keysym::XK_d,
+                'e' => keysym::XK_e,
+                'f' => keysym::XK_f,
+                'g' => keysym::XK_g,
+                'h' => keysym::XK_h,
+                'i' => keysym::XK_i,
+                'j' => keysym::XK_j,
+                'k' => keysym::XK_k,
+                'l' => keysym::XK_l,
+                'm' => keysym::XK_m,
+                'n' => keysym::XK_n,
+                'o' => keysym::XK_o,
+                'p' => keysym::XK_p,
+                'q' => keysym::XK_q,
+                'r' => keysym::XK_r,
+                's' => keysym::XK_s,
+                't' => keysym::XK_t,
+                'u' => keysym::XK_u,
+                'v' => keysym::XK_v,
+                'w' => keysym::XK_w,
+                'x' => keysym::XK_x,
+                'y' => keysym::XK_y,
+                'z' => keysym::XK_z,
                 _ => return Err(format!("tecla no soportada: {tok}")),
             });
         }
         if c.is_ascii_digit() {
             return Ok(match c {
-                '0' => Code::Digit0,
-                '1' => Code::Digit1,
-                '2' => Code::Digit2,
-                '3' => Code::Digit3,
-                '4' => Code::Digit4,
-                '5' => Code::Digit5,
-                '6' => Code::Digit6,
-                '7' => Code::Digit7,
-                '8' => Code::Digit8,
-                '9' => Code::Digit9,
+                '0' => keysym::XK_0,
+                '1' => keysym::XK_1,
+                '2' => keysym::XK_2,
+                '3' => keysym::XK_3,
+                '4' => keysym::XK_4,
+                '5' => keysym::XK_5,
+                '6' => keysym::XK_6,
+                '7' => keysym::XK_7,
+                '8' => keysym::XK_8,
+                '9' => keysym::XK_9,
                 _ => return Err(format!("tecla no soportada: {tok}")),
             });
         }
     }
     match t.as_str() {
-        "backquote" | "`" => Ok(Code::Backquote),
-        "ñ" | "semicolon" => Ok(Code::Semicolon),
-        "space" => Ok(Code::Space),
-        "enter" => Ok(Code::Enter),
-        "escape" | "esc" => Ok(Code::Escape),
-        "tab" => Ok(Code::Tab),
-        "f1" => Ok(Code::F1),
-        "f2" => Ok(Code::F2),
-        "f3" => Ok(Code::F3),
-        "f4" => Ok(Code::F4),
-        "f5" => Ok(Code::F5),
-        "f6" => Ok(Code::F6),
-        "f7" => Ok(Code::F7),
-        "f8" => Ok(Code::F8),
-        "f9" => Ok(Code::F9),
-        "f10" => Ok(Code::F10),
-        "f11" => Ok(Code::F11),
-        "f12" => Ok(Code::F12),
+        "backquote" | "`" => Ok(keysym::XK_quoteleft),
+        "ñ" => Ok(keysym::XK_ntilde),
+        "semicolon" => Ok(keysym::XK_semicolon),
+        "comma" => Ok(keysym::XK_comma),
+        "period" => Ok(keysym::XK_period),
+        "slash" => Ok(keysym::XK_slash),
+        "minus" => Ok(keysym::XK_minus),
+        "equal" => Ok(keysym::XK_equal),
+        "space" => Ok(keysym::XK_space),
+        "enter" | "return" => Ok(keysym::XK_Return),
+        "escape" | "esc" => Ok(keysym::XK_Escape),
+        "tab" => Ok(keysym::XK_Tab),
+        "backspace" => Ok(keysym::XK_BackSpace),
+        "f1" => Ok(keysym::XK_F1),
+        "f2" => Ok(keysym::XK_F2),
+        "f3" => Ok(keysym::XK_F3),
+        "f4" => Ok(keysym::XK_F4),
+        "f5" => Ok(keysym::XK_F5),
+        "f6" => Ok(keysym::XK_F6),
+        "f7" => Ok(keysym::XK_F7),
+        "f8" => Ok(keysym::XK_F8),
+        "f9" => Ok(keysym::XK_F9),
+        "f10" => Ok(keysym::XK_F10),
+        "f11" => Ok(keysym::XK_F11),
+        "f12" => Ok(keysym::XK_F12),
         _ => Err(format!("tecla no soportada: {tok}")),
     }
 }
 
-pub fn parse_hotkey(s: &str) -> Result<HotKey, String> {
+pub fn parse_hotkey(s: &str) -> Result<Spec, String> {
     let parts: Vec<&str> = s
         .split('+')
         .map(str::trim)
@@ -145,44 +160,144 @@ pub fn parse_hotkey(s: &str) -> Result<HotKey, String> {
         (&parts[..parts.len() - 1], parts[parts.len() - 1])
     };
     let mods = parse_mods(mods_tokens);
-    let code = parse_code(key_token)?;
-    Ok(HotKey::new(mods, code))
+    let keysym = parse_keysym(key_token)?;
+    Ok(Spec { mods, keysym })
+}
+
+fn event_loop(cmd_rx: mpsc::Receiver<Cmd>, event_tx: mpsc::Sender<()>) {
+    let xlib = match xlib::Xlib::open() {
+        Ok(x) => x,
+        Err(_) => return,
+    };
+    unsafe {
+        let display = (xlib.XOpenDisplay)(std::ptr::null());
+        if display.is_null() {
+            return;
+        }
+        let root: xlib::Window = (xlib.XDefaultRootWindow)(display);
+        let mut supported_rtrn: i32 = 0;
+        (xlib.XkbSetDetectableAutoRepeat)(display, 1, &mut supported_rtrn);
+        (xlib.XSelectInput)(display, root, xlib::KeyPressMask);
+
+        let mut current_keycode: Option<u32> = None;
+        let mut current_mods: u32 = 0;
+
+        loop {
+            while let Ok(cmd) = cmd_rx.try_recv() {
+                match cmd {
+                    Cmd::Register { spec, reply } => {
+                        if let Some(kc) = current_keycode {
+                            for m in IGNORED_MODS {
+                                (xlib.XUngrabKey)(display, kc as i32, (current_mods | m) as u32, root);
+                            }
+                        }
+                        let keycode = (xlib.XKeysymToKeycode)(display, spec.keysym.into());
+                        if keycode == 0 {
+                            let _ = reply.send(Err(format!("tecla no soportada: {}", spec.keysym)));
+                            current_keycode = None;
+                            continue;
+                        }
+                        let mut ok = true;
+                        for m in IGNORED_MODS {
+                            let res = (xlib.XGrabKey)(
+                                display,
+                                keycode as i32,
+                                (spec.mods | m) as u32,
+                                root,
+                                0,
+                                xlib::GrabModeAsync,
+                                xlib::GrabModeAsync,
+                            );
+                            if res == xlib::BadAccess as i32 {
+                                ok = false;
+                                break;
+                            }
+                        }
+                        if !ok {
+                            for m in IGNORED_MODS {
+                                (xlib.XUngrabKey)(display, keycode as i32, (spec.mods | m) as u32, root);
+                            }
+                            let _ = reply.send(Err("hotkey en uso por otra aplicacion".to_string()));
+                            current_keycode = None;
+                            continue;
+                        }
+                        current_keycode = Some(keycode as u32);
+                        current_mods = spec.mods;
+                        let _ = reply.send(Ok(()));
+                    }
+                }
+            }
+
+            if (xlib.XPending)(display) > 0 {
+                let mut event: xlib::XEvent = std::mem::zeroed();
+                (xlib.XNextEvent)(display, &mut event);
+                if event.get_type() == xlib::KeyPress {
+                    let keycode = event.key.keycode;
+                    if Some(keycode as u32) == current_keycode {
+                        let event_mods = event.key.state
+                            & (xlib::ControlMask
+                                | xlib::ShiftMask
+                                | xlib::Mod1Mask
+                                | xlib::Mod4Mask);
+                        if event_mods
+                            == (current_mods
+                                & (xlib::ControlMask
+                                    | xlib::ShiftMask
+                                    | xlib::Mod1Mask
+                                    | xlib::Mod4Mask))
+                        {
+                            let _ = event_tx.send(());
+                        }
+                    }
+                }
+            } else {
+                std::thread::sleep(Duration::from_millis(10));
+            }
+        }
+    }
 }
 
 pub fn init() {
-    // no-op log on start
+    let (etx, erx) = mpsc::channel();
+    let _ = EVENT_TX.set(etx.clone());
+    let _ = EVENT_RX.set(Mutex::new(erx));
+    let (ctx, crx) = mpsc::channel();
+    let _ = CMD_TX.set(ctx.clone());
+    std::thread::spawn(move || event_loop(crx, etx));
+
     let s = load_config();
-    if let Ok(hk) = parse_hotkey(&s) {
-        let mut mgr_guard = MANAGER.lock().unwrap();
-        if mgr_guard.is_none() {
-            *mgr_guard = global_hotkey::GlobalHotKeyManager::new().ok();
-        }
-        if let Some(mgr) = mgr_guard.as_ref() {
-            let _ = mgr.register(hk);
-            *CURRENT.lock().unwrap() = Some(hk);
-        }
+    if let Ok(spec) = parse_hotkey(&s) {
+        let (rtx, _rrx) = mpsc::channel();
+        let _ = ctx.send(Cmd::Register {
+            spec,
+            reply: rtx,
+        });
     }
 }
 
 pub fn set_hotkey(s: &str) -> Result<(), String> {
-    let hk = match parse_hotkey(s) { Ok(h) => h, Err(e) => { crate::errlog::log("hotkey_parse", &e); return Err(e); } };
-    let mut mgr_guard = MANAGER.lock().unwrap();
-    if mgr_guard.is_none() {
-        *mgr_guard = Some(global_hotkey::GlobalHotKeyManager::new().map_err(|e| e.to_string())?);
+    let spec = parse_hotkey(s)?;
+    let cmd_tx = CMD_TX.get().ok_or_else(|| "hotkey no inicializado".to_string())?;
+    let (rtx, rrx) = mpsc::channel();
+    cmd_tx
+        .send(Cmd::Register {
+            spec,
+            reply: rtx,
+        })
+        .map_err(|_| "hilo hotkey caido".to_string())?;
+    let res = rrx.recv().map_err(|_| "sin respuesta hotkey".to_string())?;
+    if res.is_ok() {
+        save_config(s);
     }
-    let mgr = mgr_guard.as_ref().unwrap();
-    // unregister current
-    if let Some(cur) = CURRENT.lock().unwrap().take() {
-        let _ = mgr.unregister(cur);
-    }
-    mgr.register(hk).map_err(|e| { crate::errlog::log("hotkey", &e.to_string()); e.to_string() })?;
-    *CURRENT.lock().unwrap() = Some(hk);
-    save_config(s);
-    Ok(())
+    res
 }
 
 pub fn current() -> String {
     load_config()
+}
+
+pub fn receiver() -> &'static Mutex<mpsc::Receiver<()>> {
+    EVENT_RX.get().expect("hotkey no inicializado")
 }
 
 #[cfg(test)]
