@@ -124,3 +124,11 @@ En `tauri.conf.json`:
 - Ditto original: https://github.com/sabrogden/Ditto (GPL-3.0)
 - DittoDeb: `/home/mike/ClineWorkSpace/DittoDeb` (commit 5e33e10)
 - Linux Mint 22.3 (Ubuntu 24.04 noble), dpkg 1.22.6
+
+## 10. Resultado de build (2026-10-26)
+
+- `cargo check -p ditto-deb` OK.
+- Frontend `npm run build` OK (src/dist).
+- `tauri build` compilo binario release OK (`target/release/ditto-deb`), pero el bundler .deb fallo por falta de `libayatana-appindicator3-dev` (deteccion pkg-config). 
+- Se genero .deb manual con `dpkg-deb` en `/tmp/ditto-deb_0.1.0_amd64.deb` (5.0M) y se valido con `dpkg-deb --info/--contents`.
+- Para que Tauri genere .deb automaticamente en CI, instalar `libayatana-appindicator3-dev` en el runner (requiere sudo/apt).

@@ -9,3 +9,6 @@ build-dir/
 *.log
 .DS_Store
 src-tauri/gen/
+
+# Debian packages
+*.deb
