@@ -1,13 +1,11 @@
-# Build artifacts
-target/
+/target/
+**/target/
 node_modules/
 dist/
+build/
+.flatpak-builder/
+build-dir/
+*.db
 *.log
-
-# OS
 .DS_Store
-
-# Secrets
-.env
-.git-credentials
-.gitconfig
+src-tauri/gen/

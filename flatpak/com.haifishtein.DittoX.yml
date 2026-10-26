@@ -1,0 +1,18 @@
+app-id: com.haifishtein.DittoX
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: dittox
+finish-args:
+  - --socket=wayland
+  - --socket=x11
+  - --share=ipc
+  - --talk-name=org.kde.klipper
+  - --talk-name=org.freedesktop.Flatpak
+  - --filesystem=xdg-data/dittox:create
+modules:
+  - name: dittox
+    buildsystem: cargo
+    sources:
+      - type: dir
+        path: ../

@@ -1,0 +1,9 @@
+M0 scaffold Plan A Tauri+Rust + docs
+
+- Plan A confirmado: Tauri 2 + Rust + TS + SQLite FTS5 para SteamOS
+- Docs: analisis Ditto original, comparativa stacks A/B/C, plan M0-M5, micro-tareas T00-T50
+- Scaffold: Cargo workspace, src-tauri (db FTS5, clipboard, hotkey Ctrl+`, paste wtype/xdotool, tray), src UI popup stub, flatpak manifest
+- LICENSE GPL-3.0, README, .gitignore
+- Ref: sabrogden/Ditto GPL-3.0, local-first
+
+Docs: documents/plan/00-plan-A-overview.md, 01-M0-M1-detalle.md, 02-M2-M5-riesgos.md, 03-micro-tareas.md, CHANGELOG.md

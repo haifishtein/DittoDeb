@@ -1,0 +1,73 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable@v1
+
+      - name: System deps (Tauri v2 + WebKit)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential curl wget file pkg-config \
+            libwebkit2gtk-4.1-dev libsoup-3.0-dev \
+            libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build UI
+        run: npm --prefix src install && npm --prefix src run build
+
+      - name: Test core
+        run: cargo test -p dittox-core
+
+      - name: Build dittox (release)
+        run: cargo build --release -p dittox
+
+      - name: Stage tarball (bin + .desktop + docs)
+        run: |
+          mkdir -p pkg/dittox-linux-x86_64
+          cp target/release/dittox pkg/dittox-linux-x86_64/
+          sed 's|^Exec=.*|Exec=dittox|' flatpak/com.haifishtein.DittoX.desktop > pkg/dittox-linux-x86_64/com.haifishtein.DittoX.desktop
+          cp README.md LICENSE pkg/dittox-linux-x86_64/
+          cat > pkg/dittox-linux-x86_64/INSTALL.txt <<'EOF'
+          DittoX — install desde GitHub Release (Desktop-only, solo-GitHub ADR-002)
+          1. tar -xzf dittox-linux-x86_64.tar.gz
+          2. cp dittox ~/.local/bin/  (mkdir -p ~/.local/bin)
+          3. cp com.haifishtein.DittoX.desktop ~/.local/share/applications/
+             cp com.haifishtein.DittoX.desktop ~/.config/autostart/  (opcional autostart)
+          4. ~/.local/bin/dittox  (o desde menu DittoX)
+          Requiere Wayland: wtype / X11: xdotool para paste Ctrl+V.
+          Alternativa build fuente: git clone https://github.com/haifishtein/DittoX && cargo build --release -p dittox
+          EOF
+          tar -czf dittox-linux-x86_64.tar.gz -C pkg dittox-linux-x86_64
+          ls -lh dittox-linux-x86_64.tar.gz
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dittox-linux-x86_64
+          path: dittox-linux-x86_64.tar.gz
+
+  publish:
+    needs: [build]
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dittox-linux-x86_64
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/dittox-linux-x86_64.tar.gz
+          generate_release_notes: true
+

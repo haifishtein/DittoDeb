@@ -1,0 +1,12 @@
+M0+M1 DittoX Tauri+Rust Desktop-only (T00-T18)
+
+- Stack A confirmado: Tauri2 + Rust + TS + SQLite FTS5, Desktop KDE only (ADR-001, sin GameMode/Decky)
+- Toolchain: rustc 1.99 cargo 1.99 node 20.19 npm 10.8.2 (env-log.md con revert)
+- Scaffold: Cargo workspace (src-tauri + crates/core), src Vite TS, flatpak yml + desktop + metainfo, tauri.conf + capabilities
+- M1 texto: db init/insert/search FTS5, clipboard poll sha256 dedup arboard, IPC search/get, UI lista + paste click, hotkey Ctrl+`, paste wtype/xdotool + flatpak-spawn, tray stub, autostart desktop
+- Fixes: clipboard-rs yanked eliminado, rusqlite bundled-full, split dittox-core para test sin webkit
+- Tests: cargo test -p dittox-core 2 passed (insert_and_search, dedup_and_empty) en dittox-dev distrobox
+- Docs: analisis Ditto-original, comparativa A/B/C, plan M0-M5, micro-tareas, env template/log, WORKSPACE-POLICY, COSTO-BOTONES, T-diagnosis webkit/cc
+
+Ejecutar en host:
+rm -f .gitmessage; git add .gitignore Cargo.toml LICENSE README.md documents flatpak src-tauri src crates; git commit -F documents/plan/COMMIT-M0M1.txt; git log --oneline -3
