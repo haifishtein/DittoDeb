@@ -108,7 +108,7 @@ function paintSel() {
 async function refresh() {
   const term = q.value.trim();
   statusEl.textContent = term ? `Filter: “${term.slice(0, 28)}”` : "Recent clips";
-  const raw = await invoke<Clip[]>("search_clips_cmd", { q: term || "a", limit: 200 });
+  const raw = await invoke<Clip[]>("search_clips_cmd", { q: term, limit: 200 });
   let pinned: Clip[] = [];
   try { pinned = await invoke<Clip[]>("list_pinned_cmd"); } catch { pinned = []; }
   const pinnedIds = new Set(pinned.map((p) => p.id));
@@ -144,6 +144,7 @@ hkBtn.onclick = async () => {
   } catch (e) { statusEl.textContent = String(e); }
 };
 invoke<string>('get_hotkey_cmd').then((h) => { statusEl.textContent = `Toggle: ${h}`; }).catch(() => {});
+getCurrentWindow().onFocusChanged(({ payload }) => { if (payload) refresh().catch(() => {}); }).catch(() => {});
 refresh();
 // settings appended
 // Advanced settings UI

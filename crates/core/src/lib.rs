@@ -33,6 +33,14 @@ pub fn insert_clip(conn: &Connection, text: &str) -> Result<i64> {
 }
 
 pub fn search_clips(conn: &Connection, q: &str, limit: i64) -> Result<Vec<(i64, String)>> {
+    // Sin termino de busqueda: devolver clips recientes (para vista "Recent clips").
+    if q.trim().is_empty() {
+        let mut stmt = conn.prepare("SELECT id,text FROM clips ORDER BY created_at DESC, id DESC LIMIT ?1")?;
+        let rows: Vec<(i64, String)> = stmt
+            .query_map([limit], |r| Ok((r.get(0)?, r.get(1)?)))?
+            .collect::<Result<Vec<_>, _>>()?;
+        return Ok(rows);
+    }
     // FTS5 trata '-' y ':' como operadores; entrecomillamos cada termino para
     // buscar texto literal (incluyendo palabras con guiones).
     let q = q
