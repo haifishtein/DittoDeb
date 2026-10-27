@@ -32,6 +32,12 @@ pub fn get_clip_cmd(id: i64) -> Result<Option<String>, String> {
 }
 
 #[tauri::command]
+pub fn delete_clip_cmd(id: i64) -> Result<(), String> {
+    let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
+    ditto_deb_core::delete_clip(&conn, id).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub fn toggle_pin_cmd(id: i64) -> Result<bool, String> {
     let conn = ditto_deb_core::init_db(&ditto_deb_core::db_path()).map_err(|e| e.to_string())?;
     ditto_deb_core::pins::toggle_pin(&conn, id).map_err(|e| e.to_string())

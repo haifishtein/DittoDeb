@@ -91,6 +91,34 @@ pub fn get_clip_detail(
     }
 }
 
+pub fn delete_clip(conn: &Connection, id: i64) -> Result<()> {
+    let pinned: i64 = conn.query_row("SELECT pinned FROM clips WHERE id=?1", [id], |r| r.get(0)).unwrap_or(0);
+    if pinned == 1 {
+        return Err(rusqlite::Error::InvalidColumnName("cannot delete pinned clip".to_string()));
+    }
+    let _ = conn.execute("DELETE FROM clip_groups WHERE clip_id=?1", [id]);
+    conn.execute("DELETE FROM clips WHERE id=?1", [id])?;
+    Ok(())
+}
+
+pub fn find_clip_id(conn: &Connection, text: &str) -> Result<Option<i64>> {
+    let mut stmt = conn.prepare("SELECT id FROM clips WHERE text=?1 LIMIT 1")?;
+    let mut rows = stmt.query([text])?;
+    if let Some(r) = rows.next()? {
+        Ok(Some(r.get(0)?))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn save_clip(conn: &Connection, text: &str, html: Option<&str>, kind: &str) -> Result<i64> {
+    if let Some(id) = find_clip_id(conn, text)? {
+        conn.execute("UPDATE clips SET created_at=strftime('%s','now') WHERE id=?1", [id])?;
+        return Ok(id);
+    }
+    insert_clip_full(conn, text, html, kind)
+}
+
 pub fn db_path() -> String {
     std::env::var("DITTO_DEB_DB").unwrap_or_else(|_| {
         let base = dirs::data_dir().unwrap_or_else(|| std::path::PathBuf::from("."));

@@ -4,7 +4,8 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 // DittoDeb popup: virtualized list + preview pane + pins
 type Clip = { id: number; text: string; pinned?: boolean };
 type ClipDetail = { id: number; text: string; html: string | null; kind: string };
-const ITEM_H = 68;
+const ROW_H = 68;
+const STRIDE = ROW_H;
 document.querySelector("#app")!.innerHTML = `
 <div class=layout>
   <div class=list-pane>
@@ -43,6 +44,24 @@ async function pastePlain(id: number) {
   statusEl.textContent = "Pasting plain…";
   try { await invoke("paste_clip_plain_cmd", { id }); } catch (e) { statusEl.textContent = String(e); }
 }
+async function deleteClip(id: number) {
+  const target = items.find((c) => c.id === id);
+  if (target?.pinned) { statusEl.textContent = "Cannot delete pinned clip"; return; }
+  const idx = items.findIndex((c) => c.id === id);
+  try {
+    await invoke("delete_clip_cmd", { id });
+    await refresh();
+    if (items.length) {
+      let next = idx >= 0 ? idx : 0;
+      if (next >= items.length) next = items.length - 1;
+      sel = next;
+      paintSel();
+    } else {
+      sel = 0;
+      updatePreview();
+    }
+  } catch (e) { statusEl.textContent = String(e); }
+}
 async function togglePin(id: number) {
   try { await invoke("toggle_pin_cmd", { id }); await refresh(); } catch (e) { statusEl.textContent = String(e); }
 }
@@ -70,8 +89,8 @@ async function updatePreview() {
 }
 function visibleRange() {
   const h = list.clientHeight || 400;
-  const start = Math.max(0, Math.floor(scrollTop / ITEM_H) - 4);
-  const count = Math.ceil(h / ITEM_H) + 8;
+  const start = Math.max(0, Math.floor(scrollTop / STRIDE) - 4);
+  const count = Math.ceil(h / STRIDE) + 8;
   const end = Math.min(items.length, start + count);
   return { start, end };
 }
@@ -82,29 +101,36 @@ function renderList() {
     return;
   }
   const { start, end } = visibleRange();
-  const top = document.createElement("div"); top.style.height = (start * ITEM_H) + "px"; list.appendChild(top);
+  const top = document.createElement("div"); top.style.height = (start * STRIDE) + "px"; list.appendChild(top);
   for (let i = start; i < end; i++) {
     const c = items[i];
     const li = document.createElement("div");
     li.className = "vrow" + (i === sel ? " selected" : "") + (c.pinned ? " pinned" : "");
-    li.style.height = ITEM_H + "px";
+    li.style.height = ROW_H + "px";
     li.dataset.id = String(c.id);
     const pinLabel = c.pinned ? "★" : "☆";
-    li.innerHTML = `<span class=clip-id>${i + 1}</span><span class=clip-text>${esc(c.text.slice(0, 160))}</span><span class=clip-side><button class="pin-btn${c.pinned ? " is-pinned" : ""}" title="Pin/unpin">${pinLabel}</button></span>`;
+    li.innerHTML = `<span class=clip-id>${i + 1}</span><span class=clip-text>${esc(c.text.slice(0, 160))}</span><span class=clip-side><button class="pin-btn${c.pinned ? " is-pinned" : ""}" title="Pin/unpin">${pinLabel}</button>${c.pinned ? "" : `<button class="del-btn" title="Delete clip">✕</button>`}</span>`;
     li.onclick = () => { sel = i; paintSel(); paste(c.id); };
-    li.onmouseenter = () => { sel = i; paintSel(); };
+    li.onmouseenter = () => {
+      document.querySelectorAll('.vrow.selected').forEach((el) => el.classList.remove('selected'));
+      li.classList.add('selected');
+      sel = i;
+      updatePreview();
+    };
     const btn = li.querySelector(".pin-btn") as HTMLButtonElement;
     btn.onclick = (e) => { e.stopPropagation(); togglePin(c.id); };
+    const delBtn = li.querySelector(".del-btn") as HTMLButtonElement | null;
+    if (delBtn) delBtn.onclick = (e) => { e.stopPropagation(); deleteClip(c.id); };
     list.appendChild(li);
   }
-  const bottom = document.createElement("div"); bottom.style.height = ((items.length - end) * ITEM_H) + "px"; list.appendChild(bottom);
+  const bottom = document.createElement("div"); bottom.style.height = ((items.length - end) * STRIDE) + "px"; list.appendChild(bottom);
 }
 function paintSel() {
   // keep selected row visible
   const viewH = list.clientHeight || 400;
-  const top = sel * ITEM_H;
+  const top = sel * STRIDE;
   if (top < scrollTop) scrollTop = top;
-  else if (top + ITEM_H > scrollTop + viewH) scrollTop = top + ITEM_H - viewH;
+  else if (top + ROW_H > scrollTop + viewH) scrollTop = top + ROW_H - viewH;
   list.scrollTop = scrollTop;
   renderList();
   updatePreview();
@@ -127,6 +153,7 @@ q.addEventListener("input", refresh);
 q.focus();
 getCurrentWindow().onFocusChanged(({ payload }) => { if (payload) q.focus(); });
 async function hideWindow() {
+  q.value = "";
   try { await invoke("hide_window_cmd"); }
   catch (e1) {
     try { await getCurrentWindow().hide(); }
@@ -137,6 +164,7 @@ q.addEventListener("keydown", async (e) => {
   if (e.key === "Escape") { e.preventDefault(); await hideWindow(); }
   else if (e.key === "ArrowDown") { e.preventDefault(); if (items.length) { sel = (sel + 1) % items.length; paintSel(); } }
   else if (e.key === "ArrowUp") { e.preventDefault(); if (items.length) { sel = (sel - 1 + items.length) % items.length; paintSel(); } }
+  else if (e.key === "Delete" && items.length > 0 && q.value.trim() === "") { e.preventDefault(); await deleteClip(items[sel].id); }
   else if (e.key === "Enter" && items.length > 0) {
     e.preventDefault();
     if (e.shiftKey) await pastePlain(items[sel].id); else await paste(items[sel].id);
@@ -146,6 +174,14 @@ q.addEventListener("keydown", async (e) => {
     e.preventDefault();
     await pastePlain(items[sel].id);
   }
+});
+// Global Delete handling: remove selected clip when not editing search text.
+document.addEventListener('keydown', async (e) => {
+  if (e.key !== 'Delete') return;
+  if (document.activeElement === q && q.value.trim() !== '') return;
+  if (!items.length) return;
+  e.preventDefault();
+  await deleteClip(items[sel].id);
 });
 // hotkey customization UI
 const footer = document.querySelector('.footer') as HTMLDivElement;
@@ -165,6 +201,7 @@ hkBtn.onclick = async () => {
 };
 invoke<string>('get_hotkey_cmd').then((h) => { statusEl.textContent = `Toggle: ${h}`; }).catch(() => {});
 getCurrentWindow().onFocusChanged(({ payload }) => { if (payload) refresh().catch(() => {}); }).catch(() => {});
+document.addEventListener('visibilitychange', () => { if (document.hidden) q.value = ""; });
 refresh();
 // settings appended
 // Advanced settings UI

@@ -57,7 +57,7 @@ kbd {
 #list {
   list-style: none; margin: 0; padding: 10px 12px 12px 12px;
   overflow-y: auto; overflow-x: hidden; flex: 1;
-  display: flex; flex-direction: column; gap: 6px;
+  display: block;
 }
 #list::-webkit-scrollbar { width: 10px; }
 #list::-webkit-scrollbar-track { background: transparent; }
@@ -93,7 +93,7 @@ kbd {
   color: var(--text-1); font-size: 13.5px; line-height: 1.45;
   word-break: break-word; white-space: pre-wrap;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
-  overflow: hidden; user-select: text;
+  overflow: hidden; user-select: text; min-width: 0;
 }
 .clip-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 52px; }
 .clip-action { font-size: 11px; color: var(--text-3); opacity: 0; font-family: var(--mono); transition: opacity .12s ease; }
@@ -123,6 +123,14 @@ kbd {
 }
 .pin-btn:hover { background: var(--bg-2); color: var(--accent); border-color: var(--line-strong); }
 .pin-btn.is-pinned { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+.del-btn {
+  background: var(--bg-3); border: 1px solid rgba(255,255,255,.12);
+  color: var(--text-3); border-radius: 6px; width: 26px; height: 26px;
+  display: grid; place-items: center; cursor: pointer; font-size: 14px;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+.del-btn:hover { background: rgba(255,90,90,.18); color: #ff6b6b; border-color: rgba(255,90,90,.4); }
+.pin-btn, .del-btn { pointer-events: auto; z-index: 2; user-select: auto; }
 .clip.pinned { border-color: rgba(102,192,244,.35); }
 
 /* Layout + virtualized list + preview */
@@ -131,8 +139,8 @@ kbd {
 .list-virt { flex: 1; overflow-y: auto; position: relative; padding: 8px 10px; }
 .vrow {
   display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center;
-  padding: 0 12px; border-radius: var(--radius-sm); cursor: pointer;
-  border: 1px solid transparent; transition: background .12s ease, border-color .12s ease;
+  padding: 0 12px; border-radius: var(--radius-sm); cursor: pointer; height: 68px;
+  box-sizing: border-box; border: 1px solid transparent; transition: background .12s ease, border-color .12s ease;
 }
 .vrow:hover { background: rgba(34,53,74,.7); border-color: var(--line-strong); }
 .vrow.selected { background: linear-gradient(180deg, rgba(26,159,255,.22), rgba(26,159,255,.12)); border-color: var(--accent); }
@@ -148,7 +156,7 @@ kbd {
 /* Polish responsive + scrollbar + focus */
 @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } .preview-pane { display: none; } }
 .list-virt { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
-.vrow { overflow: hidden; }
+.vrow { position: relative; }
 .vrow:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .preview-body { scrollbar-width: thin; }
 .search-box input:focus { outline: none; }

@@ -70,7 +70,7 @@ fn main() {
                     if let Some((text, html, kind)) = clipboard::poll_once(&mut last) {
                         match ditto_deb_core::init_db(&ditto_deb_core::db_path()) {
                             Ok(conn) => {
-                                if let Err(e) = ditto_deb_core::insert_clip_full(&conn, &text, html.as_deref(), kind) {
+                                if let Err(e) = ditto_deb_core::save_clip(&conn, &text, html.as_deref(), kind) {
                                     errlog::log("insert_clip", &e.to_string());
                                 }
                             }
@@ -142,6 +142,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             ipc::search_clips_cmd,
             ipc::get_clip_cmd,
+            ipc::delete_clip_cmd,
             ipc::toggle_pin_cmd,
             ipc::list_pinned_cmd,
             ipc::get_clip_detail_cmd,
